@@ -25,7 +25,7 @@ class SnakePresenter:
         with concurrent.futures.ThreadPoolExecutor() as executor:
             executor.submit(self.setUpListener)
             executor.submit(self.startGame)
-            executor.submit(self.snakeGUI.run())
+            self.snakeGUI.run()
     
     def restart(self):
         self.snakeGUI.updateScore(0)

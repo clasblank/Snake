@@ -10,7 +10,6 @@ class SnakePresenter:
         self.snakeGUI.presenter = self
         self.difficulty = 0.25
         self.playerExited = False
-        self.playerRestarted = False
         self.freeze = False
 
         self.keyToDirection = {
@@ -29,8 +28,9 @@ class SnakePresenter:
             executor.submit(self.snakeGUI.run())
     
     def restart(self):
-        self.playerRestarted = True
         self.snakeGUI.updateScore(0)
+        self.freeze = False
+        self.snakeModel.initBoard()
 
     def setDifficulty(self, val):
         self.difficulty = (abs(int(val) - 9) + 1.02) / 25
@@ -40,11 +40,6 @@ class SnakePresenter:
 
             if self.playerExited:
                 return False
-            
-            elif self.playerRestarted:
-                self.playerRestarted = False
-                self.freeze = False
-                self.snakeModel.initBoard()
 
             elif not self.freeze:
                 self.stepSnake()

@@ -36,12 +36,12 @@ class SnakeModel:
         self.size = size
         self.snakeStart = snakeStart
         self.initBoard()
+
+    def initBoard(self):
         self.currentDirection = Direction.RIGHT
         self.addNextRound = False
         self.canChangeDirection = True
         self.score = 0
-
-    def initBoard(self):
         self.board = [0] * self.size ** 2
 
         # Initialize snake at top left corner
@@ -68,15 +68,11 @@ class SnakeModel:
     def hitsEdge(self):
         return self.currentDirection == Direction.RIGHT and self.snake[0] in range(self.size - 1, self.size ** 2 - 1, self.size) \
                or self.currentDirection == Direction.DOWN and self.snake[0] in range(self.size ** 2 - self.size, self.size ** 2) \
-               or self.currentDirection == Direction.LEFT and self.snake[0] in range(0, self.size ** 2 - self.size - 1, self.size) \
+               or self.currentDirection == Direction.LEFT and self.snake[0] in range(0, self.size ** 2 - self.size + 1, self.size) \
                or self.currentDirection == Direction.UP and self.snake[0] in range(self.size)
-
 
     def snakeAteFood(self):
         return self.board[self.snake[0]] == SnakeModel.FOOD
-        # if self.board[self.snake[0]] == SnakeModel.FOOD:
-        #     self.currentlyEating.append(self.snake[0])
-        #     self.putFood()
 
     def addFoodToSnake(self):
         self.currentlyEating.append(self.snake[0])

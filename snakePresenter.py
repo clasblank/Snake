@@ -7,8 +7,11 @@ class SnakePresenter:
     def __init__(self, snakeModel, snakeGUI):
         self.snakeModel = snakeModel
         self.snakeGUI = snakeGUI
-
+        self.snakeGUI.presenter = self
+        self.difficulty = 0.25
         self.playerExited = False
+        self.playerRestarted = False
+        self.freeze = False
 
         self.keyToDirection = {
             keyboard.Key.down: Direction.DOWN,
@@ -18,52 +21,73 @@ class SnakePresenter:
         }
 
         self.snakeGUI.createBoard(self.snakeModel.size)
+
+    def run(self):
         with concurrent.futures.ThreadPoolExecutor() as executor:
             executor.submit(self.setUpListener)
-            executor.submit(self.stepSnake)
+            executor.submit(self.startGame)
             executor.submit(self.snakeGUI.run())
-        print("Exiting all")
+    
+    def restart(self):
+        self.playerRestarted = True
+        self.snakeGUI.updateScore(0)
 
-    def stepSnake(self):
+    def setDifficulty(self, val):
+        self.difficulty = (abs(int(val) - 9) + 1.02) / 25
+
+    def startGame(self):
         while True:
-            self.snakeModel.moveSnake()
-            
-            if self.snakeModel.snakeAteFood():
-                self.snakeModel.addFoodToSnake()
-                self.snakeGUI.updateScore(self.snakeModel.score)
 
-            self.snakeModel.addTail()
-            self.snakeModel.updateBoard()
-
-            self.snakeGUI.updateBoard(self.snakeModel.board)
-            time.sleep(.2)
-            if self.snakeModel.gameOver() or self.playerExited:
-                self.exitAll()
+            if self.playerExited:
                 return False
+            
+            elif self.playerRestarted:
+                self.playerRestarted = False
+                self.freeze = False
+                self.snakeModel.initBoard()
+
+            elif not self.freeze:
+                self.stepSnake()
+            
+            if self.snakeModel.gameOver():
+                self.freeze = True
+    
+    def stepSnake(self):
+        self.snakeModel.moveSnake()
+                
+        if self.snakeModel.snakeAteFood():
+            self.snakeModel.addFoodToSnake()
+            self.snakeGUI.updateScore(self.snakeModel.score)
+
+        self.snakeModel.addTail()
+        self.snakeModel.updateBoard()
+
+        self.snakeGUI.updateBoard(self.snakeModel.board)
+        time.sleep(self.difficulty)
+    
 
     def setUpListener(self):
         with keyboard.Listener( 
             on_press=self.onPress,
-            #on_release=on_release
             ) as listener:
             listener.join()
-        print("listener finished")
             
     def onPress(self, key):
         if key == keyboard.Key.esc:
-            self.playerExited = True
-        # Stop listener
+            self.exitAll()
             return False
 
-        elif key in [keyboard.Key.down, keyboard.Key.up, keyboard.Key.left, keyboard.Key.right]:
+        elif key in [keyboard.Key.down, keyboard.Key.up, keyboard.Key.left, keyboard.Key.right] and not self.freeze:
             self.snakeModel.changeDirection(self.keyToDirection[key])
 
         return True
 
     def exitAll(self):
+        self.playerExited = True
         keyboard.Controller().press(keyboard.Key.esc)
         self.snakeGUI.exit()
 
 if __name__ == "__main__":
     from snakeModel import SnakeModel
-    SnakePresenter(SnakeModel(24))
+    from snakeGUI import SnakeGUI
+    SnakePresenter(SnakeModel(24), SnakeGUI())
